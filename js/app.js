@@ -1,0 +1,22 @@
+const $=(s,root=document)=>root.querySelector(s);
+const $$=(s,root=document)=>[...root.querySelectorAll(s)];
+const toast=(message)=>{const el=$("#toast");el.textContent=message;el.classList.add("show");clearTimeout(window.__toastTimer);window.__toastTimer=setTimeout(()=>el.classList.remove("show"),3200)};
+const saveDemo=(key,value)=>{const list=JSON.parse(localStorage.getItem(key)||"[]");list.push({...value,createdAt:new Date().toISOString()});localStorage.setItem(key,JSON.stringify(list));};
+const menu=$(".menu-toggle"),nav=$(".main-nav");
+menu?.addEventListener("click",()=>{const open=nav.classList.toggle("open");menu.setAttribute("aria-expanded",String(open));menu.textContent=open?"×":"☰"});
+$$(".main-nav a").forEach(a=>a.addEventListener("click",()=>{nav.classList.remove("open");menu?.setAttribute("aria-expanded","false");menu.textContent="☰"}));
+$("#animal-filters")?.addEventListener("click",e=>{const btn=e.target.closest("[data-filter]");if(!btn)return;$$(".filter").forEach(b=>b.classList.toggle("active",b===btn));const filter=btn.dataset.filter;$$(".animal-card").forEach(card=>{const show=filter==="all"||(filter==="dog"&&card.dataset.species==="dog")||(filter==="cat"&&card.dataset.species==="cat")||(filter==="young"&&card.dataset.age==="young")||(filter==="senior"&&card.dataset.age==="senior")||(filter==="special"&&card.dataset.special==="true");card.hidden=!show})});
+$$(".save-animal").forEach(btn=>btn.addEventListener("click",()=>{btn.classList.toggle("saved");btn.textContent=btn.classList.contains("saved")?"♥":"♡";toast(btn.classList.contains("saved")?"Saved to your favourites":"Removed from favourites")}));
+let selectedAmount=250,frequency="once";
+$$("[data-amount]").forEach(btn=>btn.addEventListener("click",()=>{selectedAmount=Number(btn.dataset.amount);$("#custom-amount").value="";$$("[data-amount]").forEach(b=>b.classList.toggle("selected",b===btn));updateDonationButton()}));
+$("#custom-amount")?.addEventListener("input",e=>{selectedAmount=Math.max(0,Number(e.target.value)||0);$$("[data-amount]").forEach(b=>b.classList.remove("selected"));updateDonationButton()});
+$$("[data-frequency]").forEach(btn=>btn.addEventListener("click",()=>{frequency=btn.dataset.frequency;$$("[data-frequency]").forEach(b=>b.classList.toggle("active",b===btn))}));
+function updateDonationButton(){const btn=$("#donation-form button[type=submit]");if(btn)btn.innerHTML="Continue with ₹"+(selectedAmount||"—")+" <span>↗</span>"}
+$("#donation-form")?.addEventListener("submit",e=>{e.preventDefault();if(selectedAmount<1){toast("Please choose a donation amount.");return}toast("Payment checkout is not connected in this demo. No payment was taken.");});
+$$(".donate-campaign").forEach(btn=>btn.addEventListener("click",()=>{$("#donation-purpose").value="Emergency veterinary treatment";$("#donate").scrollIntoView({behavior:"smooth"});toast("Choose an amount to support "+btn.dataset.campaign+".")}));
+$("#report-form")?.addEventListener("submit",e=>{e.preventDefault();const data=Object.fromEntries(new FormData(e.currentTarget).entries());delete data.photo;saveDemo("pawhaven_reports",data);e.currentTarget.reset();toast("Demo report saved in this browser. It has not been sent to a rescue team.")});
+const dialog=$("#application-dialog");
+$$(".open-application").forEach(btn=>btn.addEventListener("click",()=>{const type=btn.dataset.type;$("#application-type").value=type;$("#application-eyebrow").textContent=type.toUpperCase()+" APPLICATION";$("#application-title").innerHTML=type==="Foster"?"Open your home<br><em>to a new beginning.</em>":type==="Volunteer"?"Your time can<br><em>change a life.</em>":"Try a new beginning<br><em>together.</em>";dialog.showModal()}));
+$("#application-form")?.addEventListener("submit",e=>{e.preventDefault();const data=Object.fromEntries(new FormData(e.currentTarget).entries());saveDemo("pawhaven_applications",data);e.currentTarget.reset();dialog.close();toast("Your demo application has been saved in this browser.")});
+$("#newsletter-form")?.addEventListener("submit",e=>{e.preventDefault();const email=$("#newsletter-email").value;saveDemo("pawhaven_newsletter",{email});e.currentTarget.reset();toast("Thanks for your interest! This demo does not send emails.")});
+window.addEventListener("keydown",e=>{if(e.key==="Escape"&&dialog?.open)dialog.close()});
